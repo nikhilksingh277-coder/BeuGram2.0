@@ -1,8 +1,10 @@
 // server/server.js
+
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
+import { BEUGRAM_KNOWLEDGE } from './knowledge.js';
 
 dotenv.config();
 
@@ -30,12 +32,22 @@ app.use(cors({
 
 app.use(express.json());
 
+
+// ===============================
+// HEALTH CHECK
+// ===============================
+
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
-    service: 'BEUGram Gemini Campus Copilot'
+    service: 'BeUGram Gemini Campus Copilot'
   });
 });
+
+
+// ===============================
+// GEMINI CAMPUS COPILOT
+// ===============================
 
 app.post('/api/gemini', async (req, res) => {
   const message = req.body?.message;
@@ -53,9 +65,35 @@ app.post('/api/gemini', async (req, res) => {
   }
 
   try {
+
+    // Give Gemini the BeUGram knowledge
+    // together with the user's question.
+    const prompt = `
+${BEUGRAM_KNOWLEDGE}
+
+========================
+USER QUESTION
+========================
+
+${message.trim()}
+
+========================
+INSTRUCTIONS
+========================
+
+Answer the user's question using the BeUGram knowledge provided above.
+
+If the question is specifically about BeUGram:
+- Use the provided BeUGram information.
+- Do not invent BeUGram features or rules.
+- If the information is not available in the knowledge, say that the information is not currently available.
+
+Keep the answer clear, useful and reasonably concise.
+`;
+
     const response = await ai.models.generateContent({
       model: GEMINI_MODEL,
-      contents: message.trim(),
+      contents: prompt,
     });
 
     return res.json({
@@ -63,6 +101,7 @@ app.post('/api/gemini', async (req, res) => {
     });
 
   } catch (error) {
+
     console.error(
       'Gemini API error:',
       error?.message || error
@@ -74,12 +113,22 @@ app.post('/api/gemini', async (req, res) => {
   }
 });
 
+
+// ===============================
+// START SERVER
+// ===============================
+
 app.listen(PORT, () => {
+
   console.log(
-    `BeUgram Gemini Campus Copilot server running on http://localhost:${PORT}`
+    `BeUGram Gemini Campus Copilot server running on http://localhost:${PORT}`
   );
 
   console.log(
     `GEMINI_API_KEY present: ${Boolean(GEMINI_API_KEY)}`
+  );
+
+  console.log(
+    'BeUGram knowledge base loaded successfully.'
   );
 });

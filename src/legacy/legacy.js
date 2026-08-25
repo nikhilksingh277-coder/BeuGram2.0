@@ -3834,7 +3834,15 @@ function renderShell(route, contentHtml){
     <header class="topbar">
       <button class="icon-btn hamburger-btn" data-action="toggle-hamburger" title="Menu" aria-label="Open menu" aria-expanded="false">☰</button>
       <div class="brand" data-nav="home" style="cursor:pointer"><span class="brand-mark">B</span>BeUgram</div>
-      <div class="search-box">🔍<input type="text" placeholder="Search students, colleges, battles…" /></div>
+     <div class="search-box">
+  🔍
+  <input
+    type="text"
+    id="global-search"
+    placeholder="Search students, colleges, battles..."
+    autocomplete="off"
+  />
+</div>
       <div class="topbar-actions">
         <button class="icon-btn" data-action="toggle-theme" title="Toggle theme">🌓</button>
         <button class="icon-btn" data-nav="notifications" title="Notifications" style="position:relative">
@@ -4289,6 +4297,160 @@ function renderProfile(){
 function renderMissing(){
   return `<div class="card empty-state"><div class="emoji">🚧</div>This section is a placeholder for the hackathon MVP demo.</div>`;
 }
+
+// ---------- Global Search ----------
+
+function normalizeSearchText(value) {
+  return String(value || '')
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+function getGlobalSearchResults(query) {
+  const q = normalizeSearchText(query);
+
+  if (!q) return [];
+
+  const results = [];
+
+  // -----------------------------
+  // Search colleges
+  // -----------------------------
+  colleges.forEach((college) => {
+    const name = normalizeSearchText(college.name);
+    const location = normalizeSearchText(college.location);
+
+    if (
+      name.includes(q) ||
+      location.includes(q)
+    ) {
+      results.push({
+        type: 'college',
+        id: college.id,
+        title: college.name,
+        subtitle: college.location || 'College'
+      });
+    }
+  });
+
+  return results.slice(0, 8);
+}
+
+
+function renderGlobalSearchResults(results) {
+  let dropdown = document.getElementById('global-search-results');
+
+  if (!dropdown) {
+    dropdown = document.createElement('div');
+    dropdown.id = 'global-search-results';
+    dropdown.className = 'global-search-results';
+
+    const searchBox = document.querySelector('.search-box');
+
+    if (searchBox) {
+      searchBox.style.position = 'relative';
+      searchBox.appendChild(dropdown);
+    }
+  }
+
+  if (!results.length) {
+    dropdown.innerHTML = `
+      <div class="search-empty">
+        No results found
+      </div>
+    `;
+
+    dropdown.style.display = 'block';
+    return;
+  }
+
+  dropdown.innerHTML = results.map(result => `
+    <button
+      type="button"
+      class="global-search-result"
+      data-search-type="${result.type}"
+      data-search-id="${result.id}"
+    >
+      <span class="search-result-icon">${CollegeLogo(result.id, 32)}</span>
+
+      <span class="search-result-content">
+        <strong>${result.title}</strong>
+        <small>${result.subtitle}</small>
+      </span>
+    </button>
+  `).join('');
+
+  dropdown.style.display = 'block';
+}
+
+
+function closeGlobalSearchResults() {
+  const dropdown = document.getElementById('global-search-results');
+
+  if (dropdown) {
+    dropdown.style.display = 'none';
+  }
+}
+
+
+// Search input
+document.addEventListener('input', (event) => {
+  if (event.target.id !== 'global-search') return;
+
+  const query = event.target.value;
+
+  if (!query.trim()) {
+    closeGlobalSearchResults();
+    return;
+  }
+
+  const results = getGlobalSearchResults(query);
+
+  renderGlobalSearchResults(results);
+});
+
+
+// Search result click
+document.addEventListener('click', (event) => {
+  const result = event.target.closest('.global-search-result');
+
+  if (!result) return;
+
+  const type = result.dataset.searchType;
+  const id = result.dataset.searchId;
+
+  closeGlobalSearchResults();
+
+  const searchInput = document.getElementById('global-search');
+
+  if (searchInput) {
+    searchInput.value = '';
+  }
+
+  if (type === 'college') {
+    location.hash = `#/college/${id}`;
+  }
+
+  if (type === 'student') {
+    location.hash = `#/profile/${id}`;
+  }
+
+  if (type === 'battle') {
+    location.hash = `#/battle/${id}`;
+  }
+});
+
+
+// Close search dropdown when clicking elsewhere
+document.addEventListener('click', (event) => {
+  if (
+    !event.target.closest('.search-box')
+  ) {
+    closeGlobalSearchResults();
+  }
+});
+
 
 // ---------- app.js ----------
 // ==========================================================================
