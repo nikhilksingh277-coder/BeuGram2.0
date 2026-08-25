@@ -3774,7 +3774,7 @@ function renderLogin(){
         <h1>Welcome to BeUgram</h1>
         <p>Log in with your unique username and password.</p>
         <form id="login-form">
-          <div class="field"><label>Username</label><input name="username" type="text" autocomplete="username" placeholder="e.g. samir_kumar" required /></div>
+          <div class="field"><label>Username</label><input name="username" type="text" autocomplete="username" placeholder="e.g. " required /></div>
           <div class="field"><label>Password</label><input name="password" type="password" autocomplete="current-password" placeholder="Enter your password" minlength="8" required /></div>
           <div id="login-error" class="mod-flag bad" style="display:none"></div>
           <button type="submit" class="btn btn-primary btn-block">Login to BeUgram</button>
@@ -3806,10 +3806,10 @@ function renderRegister(){
         <h1>Register to BeUgram</h1>
         <p>Fill in your details to create your account.</p>
         <form id="register-form">
-          <div class="field"><label>Full Name</label><input name="name" type="text" autocomplete="name" placeholder="Samir Kumar" required /></div>
-          <div class="field"><label>Username</label><input name="username" type="text" autocomplete="username" placeholder="samir_kumar" required /><small class="text-faint">3–30 characters: letters, numbers, . _ -</small></div>
+          <div class="field"><label>Full Name</label><input name="name" type="text" autocomplete="name" placeholder="" required /></div>
+          <div class="field"><label>Username</label><input name="username" type="text" autocomplete="username" placeholder="" required /><small class="text-faint">3–30 characters: letters, numbers, . _ -</small></div>
           <div class="field"><label>Date of Birth</label><input name="dob" type="date" autocomplete="bday" required /></div>
-          <div class="field"><label>Place</label><input name="place" type="text" autocomplete="address-level2" placeholder="Gaya, Bihar" required /></div>
+          <div class="field"><label>Place</label><input name="place" type="text" autocomplete="address-level2" placeholder="" required /></div>
           <div class="field"><label>College</label><select name="college" required><option value="">Select your BEU college</option>${colleges.map(c => `<option value="${escAttr(c.id)}">${escAttr(c.name)}</option>`).join('')}</select></div>
           <div class="field"><label>Password</label><input name="password" type="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters" required /><small class="text-faint">Use at least 8 characters.</small></div>
           <div class="field"><label>Confirm Password</label><input name="confirmPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Re-enter your password" required /></div>
