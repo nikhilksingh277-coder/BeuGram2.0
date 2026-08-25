@@ -3774,7 +3774,7 @@ function renderLogin(){
         <h1>Welcome to BeUgram</h1>
         <p>Log in with your unique username and password.</p>
         <form id="login-form">
-          <div class="field"><label>Username</label><input name="username" type="text" autocomplete="username" placeholder="e.g. samir_kumar" required /></div>
+          <div class="field"><label>Username</label><input name="username" type="text" autocomplete="username" placeholder="e.g. " required /></div>
           <div class="field"><label>Password</label><input name="password" type="password" autocomplete="current-password" placeholder="Enter your password" minlength="8" required /></div>
           <div id="login-error" class="mod-flag bad" style="display:none"></div>
           <button type="submit" class="btn btn-primary btn-block">Login to BeUgram</button>
@@ -3806,10 +3806,10 @@ function renderRegister(){
         <h1>Register to BeUgram</h1>
         <p>Fill in your details to create your account.</p>
         <form id="register-form">
-          <div class="field"><label>Full Name</label><input name="name" type="text" autocomplete="name" placeholder="Samir Kumar" required /></div>
-          <div class="field"><label>Username</label><input name="username" type="text" autocomplete="username" placeholder="samir_kumar" required /><small class="text-faint">3–30 characters: letters, numbers, . _ -</small></div>
+          <div class="field"><label>Full Name</label><input name="name" type="text" autocomplete="name" placeholder="" required /></div>
+          <div class="field"><label>Username</label><input name="username" type="text" autocomplete="username" placeholder="" required /><small class="text-faint">3–30 characters: letters, numbers, . _ -</small></div>
           <div class="field"><label>Date of Birth</label><input name="dob" type="date" autocomplete="bday" required /></div>
-          <div class="field"><label>Place</label><input name="place" type="text" autocomplete="address-level2" placeholder="Gaya, Bihar" required /></div>
+          <div class="field"><label>Place</label><input name="place" type="text" autocomplete="address-level2" placeholder="" required /></div>
           <div class="field"><label>College</label><select name="college" required><option value="">Select your BEU college</option>${colleges.map(c => `<option value="${escAttr(c.id)}">${escAttr(c.name)}</option>`).join('')}</select></div>
           <div class="field"><label>Password</label><input name="password" type="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters" required /><small class="text-faint">Use at least 8 characters.</small></div>
           <div class="field"><label>Confirm Password</label><input name="confirmPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Re-enter your password" required /></div>
@@ -3834,7 +3834,15 @@ function renderShell(route, contentHtml){
     <header class="topbar">
       <button class="icon-btn hamburger-btn" data-action="toggle-hamburger" title="Menu" aria-label="Open menu" aria-expanded="false">☰</button>
       <div class="brand" data-nav="home" style="cursor:pointer"><span class="brand-mark">B</span>BeUgram</div>
-      <div class="search-box">🔍<input type="text" placeholder="Search students, colleges, battles…" /></div>
+     <div class="search-box">
+  🔍
+  <input
+    type="text"
+    id="global-search"
+    placeholder="Search students, colleges, battles..."
+    autocomplete="off"
+  />
+</div>
       <div class="topbar-actions">
         <button class="icon-btn" data-action="toggle-theme" title="Toggle theme">🌓</button>
         <button class="icon-btn" data-nav="notifications" title="Notifications" style="position:relative">
@@ -4289,6 +4297,160 @@ function renderProfile(){
 function renderMissing(){
   return `<div class="card empty-state"><div class="emoji">🚧</div>This section is a placeholder for the hackathon MVP demo.</div>`;
 }
+
+// ---------- Global Search ----------
+
+function normalizeSearchText(value) {
+  return String(value || '')
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+function getGlobalSearchResults(query) {
+  const q = normalizeSearchText(query);
+
+  if (!q) return [];
+
+  const results = [];
+
+  // -----------------------------
+  // Search colleges
+  // -----------------------------
+  colleges.forEach((college) => {
+    const name = normalizeSearchText(college.name);
+    const location = normalizeSearchText(college.location);
+
+    if (
+      name.includes(q) ||
+      location.includes(q)
+    ) {
+      results.push({
+        type: 'college',
+        id: college.id,
+        title: college.name,
+        subtitle: college.location || 'College'
+      });
+    }
+  });
+
+  return results.slice(0, 8);
+}
+
+
+function renderGlobalSearchResults(results) {
+  let dropdown = document.getElementById('global-search-results');
+
+  if (!dropdown) {
+    dropdown = document.createElement('div');
+    dropdown.id = 'global-search-results';
+    dropdown.className = 'global-search-results';
+
+    const searchBox = document.querySelector('.search-box');
+
+    if (searchBox) {
+      searchBox.style.position = 'relative';
+      searchBox.appendChild(dropdown);
+    }
+  }
+
+  if (!results.length) {
+    dropdown.innerHTML = `
+      <div class="search-empty">
+        No results found
+      </div>
+    `;
+
+    dropdown.style.display = 'block';
+    return;
+  }
+
+  dropdown.innerHTML = results.map(result => `
+    <button
+      type="button"
+      class="global-search-result"
+      data-search-type="${result.type}"
+      data-search-id="${result.id}"
+    >
+      <span class="search-result-icon">${CollegeLogo(result.id, 32)}</span>
+
+      <span class="search-result-content">
+        <strong>${result.title}</strong>
+        <small>${result.subtitle}</small>
+      </span>
+    </button>
+  `).join('');
+
+  dropdown.style.display = 'block';
+}
+
+
+function closeGlobalSearchResults() {
+  const dropdown = document.getElementById('global-search-results');
+
+  if (dropdown) {
+    dropdown.style.display = 'none';
+  }
+}
+
+
+// Search input
+document.addEventListener('input', (event) => {
+  if (event.target.id !== 'global-search') return;
+
+  const query = event.target.value;
+
+  if (!query.trim()) {
+    closeGlobalSearchResults();
+    return;
+  }
+
+  const results = getGlobalSearchResults(query);
+
+  renderGlobalSearchResults(results);
+});
+
+
+// Search result click
+document.addEventListener('click', (event) => {
+  const result = event.target.closest('.global-search-result');
+
+  if (!result) return;
+
+  const type = result.dataset.searchType;
+  const id = result.dataset.searchId;
+
+  closeGlobalSearchResults();
+
+  const searchInput = document.getElementById('global-search');
+
+  if (searchInput) {
+    searchInput.value = '';
+  }
+
+  if (type === 'college') {
+    location.hash = `#/college/${id}`;
+  }
+
+  if (type === 'student') {
+    location.hash = `#/profile/${id}`;
+  }
+
+  if (type === 'battle') {
+    location.hash = `#/battle/${id}`;
+  }
+});
+
+
+// Close search dropdown when clicking elsewhere
+document.addEventListener('click', (event) => {
+  if (
+    !event.target.closest('.search-box')
+  ) {
+    closeGlobalSearchResults();
+  }
+});
+
 
 // ---------- app.js ----------
 // ==========================================================================
